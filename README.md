@@ -42,28 +42,38 @@ date_id, full_date, day, month, year, quarter
 ## DimMethod
 method_id, method_type (KO/TKO, Decision, Submission, etc.)
 
+##(and optionally FactFighterStats linked to DimFighter)
 
-
-​
-(and optionally FactFighterStats linked to DimFighter)
- Analytics Requirements
-Fighter Performance
+## Analytics Requirements
+### Fighter Performance
 Win/Loss ratio per fighter
+
 Fighters with the most finishes (KO/Submissions)
+
 Average fight duration per fighter
-Event Analytics
+
+### Event Analytics
 Events with the most fights
+
 Top locations by number of events
+
 Event activity trend (fights per year/quarter)
-Fight Trends
+
+### Fight Trends
 Most common winning method overall
+
 Round distribution of finishes (most fights ending in round 1, etc.)
+
 Country-level fighter performance comparison
- Deliverables
+
+## Deliverables
 Data Warehouse Schema (star schema implemented in SQL Server)
+
 ETL Process (staging CSVs → cleansing → load to DW)
+
 SQL Queries for insights above
-Documentation:
+
+** Documentation: **
 ERD (star schema diagram)
 Data dictionary (tables + columns)
 README in GitHub
