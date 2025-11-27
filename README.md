@@ -29,7 +29,7 @@ method_id (FK → DimMethod)
 round, time, fight_duration, date_id (FK → DimDate)
 
 ## (Optional)
-## FactFighterStats → if you want to keep fighter_stats.csv as a separate fact for per-fighter aggregated performance.
+** FactFighterStats ** → if you want to keep fighter_stats.csv as a separate fact for per-fighter aggregated performance.
 
 
 ## 🧾Dimensions (descriptive attributes)
@@ -42,14 +42,7 @@ date_id, full_date, day, month, year, quarter
 ## DimMethod
 method_id, method_type (KO/TKO, Decision, Submission, etc.)
 
- Star Schema (at a glance)
-              DimEvent
-                │
-                ▼
-DimFighter → FactFights ← DimMethod
-                ▲
-                │
-             DimDate
+
 
 ​
 (and optionally FactFighterStats linked to DimFighter)
