@@ -29,7 +29,7 @@ method_id (FK → DimMethod)
 round, time, fight_duration, date_id (FK → DimDate)
 
 ## (Optional)
-** FactFighterStats ** → if you want to keep fighter_stats.csv as a separate fact for per-fighter aggregated performance.
+**FactFighterStats** → if you want to keep fighter_stats.csv as a separate fact for per-fighter aggregated performance.
 
 
 ## 🧾Dimensions (descriptive attributes)
@@ -73,27 +73,20 @@ ETL Process (staging CSVs → cleansing → load to DW)
 
 SQL Queries for insights above
 
-** Documentation: **
+**Documentation:**
 ERD (star schema diagram)
-Data dictionary (tables + columns)
-README in GitHub
- GitHub Project Structure
-mma-data-warehouse/
-│── data/                # raw CSVs
-│── staging/             # SQL scripts for staging tables
-│── warehouse/           # fact + dimension schemas
-│── analytics/           # SQL queries for insights
-│── docs/                # ERD diagrams, documentation
-│── etl/                 # python ETL scripts (optional)
-│── tests/               # validation scripts
-│── README.md
-│── .gitignore
 
-​
- This version is industry-standard:
+Data dictionary (tables + columns)
+
+README in GitHub
+
+This version is industry-standard:
 No ERP/CRM shortcut labels
+
 Pure Fact + Dimension modeling (Kimball method)
+
 Easy for any engineer/analyst to understand
+
  MMA Data Warehouse and Analytics Project
 Welcome to the MMA Data Warehouse and Analytics repository! 
 This project demonstrates a comprehensive data warehousing and analytics solution using real-world style MMA datasets. From building a star schema warehouse to generating actionable insights, this project is designed as a portfolio showcase of industry best practices in data engineering and analytics.
