@@ -5,8 +5,8 @@ This project demonstrates a comprehensive data warehousing and analytics solutio
 Building the Data Warehouse (Data Engineering)
 ## Objective
 Design and implement a modern star schema data warehouse in SQL Server using medallion architecture (Bronze-Silver-Gold layers) to consolidate UFC events, fights, fighters, and fighter statistics data, enabling analytical reporting, performance tracking, and support for business intelligence queries about fighter performance, fight outcomes, and event trends.
-
-## Source Data (CSVs)
+## Specifications
+### Source Data  (CSVs) :
 *events.csv* → event details (metadata about each event)
 
 *fighters.csv* → fighter profile information
@@ -14,6 +14,14 @@ Design and implement a modern star schema data warehouse in SQL Server using med
 *fighter_stats.csv* → aggregate performance statistics per fighter
 
 *fights.csv* → records of individual fight outcomes
+### Data Quality:
+Cleanse and resolve data quality issues (duplicates, missing values, inconsistent formats).
+### Integration:
+Combine all sources into a unified, user-friendly star schema designed for analytical queries.
+### Scope:
+Focus on the latest available datasets; historization is not required.
+### Documentation: 
+Provide clear documentation of the data model, transformations, and queries for both technical and non-technical stakeholders.
 
 ## Warehouse Design
 ## 🏗Facts (actions/transactions)
@@ -49,6 +57,7 @@ method_id, method_type (KO/TKO, Decision, Submission, etc.)
 ##(and optionally FactFighterStats linked to DimFighter)
 
 ## Analytics Requirements
+
 ### Fighter Performance
 Win/Loss ratio per fighter
 
@@ -84,6 +93,16 @@ Data dictionary (tables + columns)
 
 README in GitHub
 
+## BI: Analytics & Reporting (Data Analytics)
+### Objective
+Develop SQL-based analytics to deliver detailed insights into:
+
+Fighter Performance (win/loss ratios, finish rates, average fight duration)
+
+Event Analytics (most active venues, event activity over time, fights per event)
+
+Fight Trends (most common winning methods, round/time distributions, country-level comparisons)
+
 This version is industry-standard:
 No ERP/CRM shortcut labels
 
@@ -92,19 +111,6 @@ Pure Fact + Dimension modeling (Kimball method)
 Easy for any engineer/analyst to understand
 
 
-Project Requirements
-Building the Data Warehouse (Data Engineering)
-Objective
-Develop a modern data warehouse in SQL Server to consolidate MMA data (events, fights, fighters, and fighter stats), enabling analytical reporting and performance tracking.
-Specifications
-Data Sources: Import data from CSV files (events, fights, fighters, fighter_stats).
-Data Quality: Cleanse and resolve data quality issues (duplicates, missing values, inconsistent formats).
-Integration: Combine all sources into a unified, user-friendly star schema designed for analytical queries.
-Scope: Focus on the latest available datasets; historization is not required.
-Documentation: Provide clear documentation of the data model, transformations, and queries for both technical and non-technical stakeholders.
-BI: Analytics & Reporting (Data Analytics)
-Objective
-Develop SQL-based analytics to deliver detailed insights into:
-Fighter Performance (win/loss ratios, finish rates, average fight duration)
-Event Analytics (most active venues, event activity over time, fights per event)
-Fight Trends (most common winning methods, round/time distributions, country-level comparisons)
+
+
+
