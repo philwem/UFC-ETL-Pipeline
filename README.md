@@ -4,9 +4,7 @@ This project demonstrates a comprehensive data warehousing and analytics solutio
 ## Project Requirements
 Building the Data Warehouse (Data Engineering)
 ## Objective
-Develop a modern data warehouse in SQL Server to consolidate MMA data (events, fights, fighters, and fighter stats), enabling analytical reporting and performance tracking.
-
-Design and implement a **star schema data warehouse** in SQL Server to consolidate UFC event, fight,fight Stats  and fighter data. The warehouse should support analytical queries about fighter performance, fight outcomes, and event trends.
+Design and implement a modern star schema data warehouse in SQL Server using medallion architecture (Bronze-Silver-Gold layers) to consolidate UFC events, fights, fighters, and fighter statistics data, enabling analytical reporting, performance tracking, and support for business intelligence queries about fighter performance, fight outcomes, and event trends.
 
 ## Source Data (CSVs)
 *events.csv* → event details (metadata about each event)
