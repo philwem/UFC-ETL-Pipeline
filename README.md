@@ -1,5 +1,11 @@
-# 🥋UFC  Data Warehouse 
+# 🥋UFC Data Warehouse
+Welcome to the UFC Data Warehouse and Analytics repository! 
+This project demonstrates a comprehensive data warehousing and analytics solution using real-world style UFC datasets. From building a star schema warehouse to generating actionable insights, this project is designed as a portfolio showcase of industry best practices in data engineering and analytics.
+## Project Requirements
+Building the Data Warehouse (Data Engineering)
 ## Objective
+Develop a modern data warehouse in SQL Server to consolidate MMA data (events, fights, fighters, and fighter stats), enabling analytical reporting and performance tracking.
+
 Design and implement a **star schema data warehouse** in SQL Server to consolidate UFC event, fight,fight Stats  and fighter data. The warehouse should support analytical queries about fighter performance, fight outcomes, and event trends.
 
 ## Source Data (CSVs)
@@ -87,10 +93,8 @@ Pure Fact + Dimension modeling (Kimball method)
 
 Easy for any engineer/analyst to understand
 
- MMA Data Warehouse and Analytics Project
-Welcome to the MMA Data Warehouse and Analytics repository! 
-This project demonstrates a comprehensive data warehousing and analytics solution using real-world style MMA datasets. From building a star schema warehouse to generating actionable insights, this project is designed as a portfolio showcase of industry best practices in data engineering and analytics.
- Project Requirements
+
+Project Requirements
 Building the Data Warehouse (Data Engineering)
 Objective
 Develop a modern data warehouse in SQL Server to consolidate MMA data (events, fights, fighters, and fighter stats), enabling analytical reporting and performance tracking.
