@@ -90,7 +90,7 @@ BEGIN
 
     PRINT('✅ Loaded cleaned Fighter_Stats → silver.Fighter_Stats');
 
-
+SELECT * FROM silver.Fighter_Stats;
     -----------------------------------------------------------------
     -- 4️⃣ Fights
     -----------------------------------------------------------------

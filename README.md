@@ -26,19 +26,31 @@ Provide clear documentation of the data model, transformations, and queries for 
 ## Warehouse Design
 ## 🏗Facts (actions/transactions)
 ### FactFights (core fact table)
-fight_id
 
-event_id (FK → DimEvent)
+                          Dim_Date
+                            |
+                            |
+Dim_Fighter  ----<  Fact_Fight_Performance  >---- Dim_Event
+   |                     |   ^   |   ^               |
+   |                     |   |   |   |               |
+Dim_WeightClass          |   |   |   |         Dim_Method
+                         |   |   |   |
+                         V   V   V   V
+                    Fact_Fighter_Stats (optional, grain: per-fighter)
 
-fighter1_id (FK → DimFighter)
 
-fighter2_id (FK → DimFighter)
+Fact_Fight_Performance grain: one row per fight (unique fight_SK)
 
-winner_id (FK → DimFighter)
+Dim_Fighter: one row per fighter, stable surrogate (fighter_sk)
 
-method_id (FK → DimMethod)
+Dim_Event: one row per event (event_sk)
 
-round, time, fight_duration, date_id (FK → DimDate)
+Dim_Date: canonical calendar dimension for BI
+
+Dim_Method / Dim_WeightClass: small lookup dims
+
+Fact_Fighter_Stats (optional): aggregated per-fighter (season / career snapshots)
+
 
 ## (Optional)
 **FactFighterStats** → if you want to keep fighter_stats.csv as a separate fact for per-fighter aggregated performance.

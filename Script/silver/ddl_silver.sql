@@ -9,7 +9,7 @@ GO
 ---------------------------------------------------------
 IF OBJECT_ID('silver.Events','U') IS NOT NULL DROP TABLE silver.Events;
 CREATE TABLE silver.Events (
-    Event_Id NVARCHAR(100),
+    Event_Id NVARCHAR(100) PRIMARY KEY,
     Name NVARCHAR(255),
     Date NVARCHAR(50),
     Location NVARCHAR(255)
@@ -21,7 +21,7 @@ GO
 ---------------------------------------------------------
 IF OBJECT_ID('silver.Fighter_Stats','U') IS NOT NULL DROP TABLE silver.Fighter_Stats;
 CREATE TABLE silver.Fighter_Stats (
-    Fighter_Id NVARCHAR(50),
+    Fighter_Id NVARCHAR(100)  PRIMARY KEY,
     Full_Name NVARCHAR(150),
     Nickname NVARCHAR(150),
     Ht NVARCHAR(50),
@@ -75,6 +75,7 @@ GO
 ---------------------------------------------------------
 IF OBJECT_ID('silver.Fights','U') IS NOT NULL DROP TABLE silver.Fights;
 CREATE TABLE silver.Fights (
+    Fight_Id INT IDENTITY(1,1) PRIMARY KEY,
     Fighter_1 NVARCHAR(150),
     Fighter_2 NVARCHAR(150),
     KD_1 NVARCHAR(10),
@@ -117,7 +118,6 @@ CREATE TABLE silver.Fights (
     Ground_Percent_2 NVARCHAR(50),
     Total_Str_Percent_1 NVARCHAR(50),
     Total_Str_Percent_2 NVARCHAR(50),
-    Sig_Str_Percent_11 NVARCHAR(100),
-    Sig_Str_Percent_21 NVARCHAR(100)
+    
 );
 GO

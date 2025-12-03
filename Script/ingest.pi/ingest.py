@@ -34,22 +34,20 @@ def load_and_clean_headers(file_path: str) -> pd.DataFrame:
 
 
 # ---------- 2️⃣ Database Connection ----------
-SERVICE_NAME = "ufc-db.cr2myk6c8qnt.eu-north-1.rds.amazonaws.com"
-PORT = "1433"
+SERVICE_NAME = "DESKTOP-BRPE7R0\SQLEXPRESS"
+# PORT = "1433"
 DATABASE_NAME = "UFC_DataWareHouse"
-USERNAME = "admin"
-PASSWORD = "UfcProj2025!"
+# USERNAME = "admin"
+# PASSWORD = "UfcProj2025!"
 
 
 def get_connection():
     """Establish new connection to RDS."""
     conn_str = f"""
         Driver={{ODBC Driver 17 for SQL Server}};
-        Server=tcp:{SERVICE_NAME},{PORT};
+        Server=tcp:{SERVICE_NAME};
         Database={DATABASE_NAME};
-        UID={USERNAME};
-        PWD={PASSWORD};
-        Encrypt=yes;
+        Trusted_Connection=yes;
         TrustServerCertificate=yes;
         Connection Timeout=30;
     """
@@ -196,10 +194,10 @@ files_tables = {
 
 
 # ---------- 6️⃣ Run Process ----------
-print("⏳ Connecting to AWS RDS...")
+print("⏳ Connecting to SQLEXPRESS...")
 try:
     test_conn = get_connection()
-    print("✅ Connected to AWS RDS SQL Server\n")
+    print("✅ Connected to SQLEXPRESS SQL Server\n")
     test_conn.close()
 except Exception as e:
     print(f"❌ Initial connection failed: {e}")

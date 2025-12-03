@@ -1,257 +1,227 @@
+/*
+===============================================================================
+DDL Script: Create Gold Views
+===============================================================================
+Script Purpose:
+    This script creates views for the Gold layer in the data warehouse. 
+    The Gold layer represents the final dimension and fact tables (Star Schema)
+
+    Each view performs transformations and combines data from the Silver layer 
+    to produce a clean, enriched, and business-ready dataset.
+
+Usage:
+    - These views can be queried directly for analytics and reporting.
+===============================================================================
+*/
 ------------------------------------------------------------
--- 1️⃣ Schema Setup (Gold Layer)
+-- 1️⃣ Gold Schema Setup
 ------------------------------------------------------------
 IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'gold')
     EXEC('CREATE SCHEMA gold');
 GO
 
 ------------------------------------------------------------
--- 2️⃣ vw_Dim_Fighter
--- Clean dimension of fighters with key stats & attributes
+-- 2️⃣ Dim_Fighter
+-- Dimension of fighters with stable surrogate key and attributes
 ------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Dim_Fighter
+CREATE OR ALTER  VIEW gold.Dim_Fighter
 AS
 SELECT
-    ROW_NUMBER() OVER (ORDER BY f.Full_Name) AS Fighter_SK,
+    ABS(CHECKSUM(LOWER(LTRIM(RTRIM(f.Full_Name))))) AS Fighter_SK,
     f.Full_Name,
     f.Nickname,
     s.Gender,
     s.Weight_Class,
     s.Fighting_Style,
-    f.Ht AS Height_cm,
-    f.Wt AS Weight_kg,
-    f.Reach AS Reach_cm,
+    TRY_CAST(f.Ht AS DECIMAL(8,2)) AS Height_cm,
+    TRY_CAST(f.Wt AS DECIMAL(8,2)) AS Weight_kg,
+    TRY_CAST(f.Reach AS DECIMAL(8,2)) AS Reach_cm,
     f.Stance,
-    s.W,
-    s.L,
-    s.D,
+    TRY_CAST(s.W AS INT) AS W,
+    TRY_CAST(s.L AS INT) AS L,
+    TRY_CAST(s.D AS INT) AS D,
     CASE 
-        WHEN (s.W + s.L) > 0 
-        THEN CAST((s.W * 100.0) / (s.W + s.L) AS DECIMAL(5,2))
+        WHEN TRY_CAST(s.W AS INT) + TRY_CAST(s.L AS INT) > 0 
+        THEN CAST((TRY_CAST(s.W AS DECIMAL(10,2)) * 100.0) / NULLIF((TRY_CAST(s.W AS INT) + TRY_CAST(s.L AS INT)),0) AS DECIMAL(5,2))
         ELSE 0 
     END AS Win_Rate,
-    TRY_CAST(s.Sig_Str_Percent AS DECIMAL(5,2)) AS Sig_Str_Accuracy,
-    TRY_CAST(s.TD AS DECIMAL(5,2)) AS Takedown_Accuracy,
-    TRY_CAST(s.Sub_Att AS DECIMAL(5,2)) AS Submission_Attempts,
-    TRY_CAST(s.Rev AS DECIMAL(5,2)) AS Reversals,
-    CAST(GETDATE() AS DATE) AS View_Refreshed_At
+    TRY_CAST(REPLACE(NULLIF(s.Sig_Str_Percent,''),'%','') AS DECIMAL(8,2)) AS Sig_Str_Accuracy,
+    TRY_CAST(REPLACE(NULLIF(s.TD,''),'%','') AS DECIMAL(8,2)) AS Takedown_Accuracy,
+    TRY_CAST(NULLIF(s.Sub_Att,'') AS DECIMAL(5,2)) AS Submission_Attempts,
+    TRY_CAST(NULLIF(s.Rev,'') AS DECIMAL(5,2)) AS Reversals,
+    CAST(GETDATE() AS DATETIME) AS View_Refreshed_At
 FROM silver.Fighters f
 LEFT JOIN silver.Fighter_Stats s
-    ON f.Full_Name = s.Full_Name;
+    ON LTRIM(RTRIM(f.Full_Name)) = LTRIM(RTRIM(s.Full_Name));
 GO
 
 ------------------------------------------------------------
--- 3️⃣ vw_Dim_Event
--- Event-level details and date breakdown
+-- 3️⃣ Dim_Event
+-- Dimension for UFC events
 ------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Dim_Event
+CREATE OR ALTER VIEW gold.Dim_Event
 AS
 SELECT
     Event_Id,
     Name AS Event_Name,
-    Date AS Event_Date,
+    TRY_CAST(Date AS DATE) AS Event_Date,
     Location,
-    DATENAME(MONTH, Date) AS Event_Month,
-    YEAR(Date) AS Event_Year,
-    DATEPART(QUARTER, Date) AS Event_Quarter
+    DATENAME(MONTH, TRY_CAST(Date AS DATE)) AS Event_Month,
+    YEAR(TRY_CAST(Date AS DATE)) AS Event_Year,
+    DATEPART(QUARTER, TRY_CAST(Date AS DATE)) AS Event_Quarter
 FROM silver.Events;
 GO
 
 ------------------------------------------------------------
--- 4️⃣ vw_Fact_Fight_Performance
--- Fight-level facts joined with events
+-- 4️⃣ Dim_WeightClass
+-- Dimension for Weight Classes (if needed for BI/analytics)
 ------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Fact_Fight_Performance
+CREATE OR ALTER VIEW gold.Dim_WeightClass
+AS
+SELECT DISTINCT
+    Weight_Class,
+    COUNT(*) OVER(PARTITION BY Weight_Class) AS Total_Fights,
+    CAST(GETDATE() AS DATETIME) AS View_Refreshed_At
+FROM silver.Fights
+WHERE Weight_Class IS NOT NULL;
+GO
+
+------------------------------------------------------------
+-- Dim_Method
+------------------------------------------------------------
+CREATE OR ALTER VIEW gold.Dim_Method
 AS
 SELECT
-    f.Event_Id,
-    e.Name AS Event_Name,
-    e.Date AS Event_Date,
-    f.Fighter_1,
-    f.Fighter_2,
+    ABS(CHECKSUM(LOWER(LTRIM(RTRIM(Method))))) AS Method_SK,
+    Method,
+    Method_Details,
+    CAST(GETDATE() AS DATETIME) AS View_Refreshed_At
+FROM (
+    SELECT DISTINCT Method, Method_Details
+    FROM silver.Fights
+    WHERE Method IS NOT NULL
+) AS Methods;
+GO
+
+
+------------------------------------------------------------
+-- Dim_Date
+------------------------------------------------------------
+CREATE OR ALTER VIEW gold.Dim_Date
+AS
+SELECT
+    CAST(DateValue AS DATE) AS Date_SK,
+    DATEPART(YEAR, DateValue) AS Year,
+    DATENAME(MONTH, DateValue) AS Month_Name,
+    DATEPART(MONTH, DateValue) AS Month,
+    DATEPART(DAY, DateValue) AS Day,
+    DATEPART(QUARTER, DateValue) AS Quarter,
+    DATENAME(WEEKDAY, DateValue) AS Weekday_Name,
+    CAST(GETDATE() AS DATETIME) AS View_Refreshed_At
+FROM (
+    SELECT DISTINCT TRY_CAST(Date AS DATE) AS DateValue
+    FROM silver.Events
+    WHERE Date IS NOT NULL
+) AS Dates;
+GO
+
+
+
+
+------------------------------------------------------------
+-- 5️⃣ Fact_Fight_Performance
+-- Fact table capturing fight-level metrics with fighter & event keys
+------------------------------------------------------------
+CREATE OR ALTER VIEW gold.Fact_Fight_Performance
+AS
+SELECT
+    -- Deterministic surrogate key per fight
+    ABS(CHECKSUM(LOWER(LTRIM(RTRIM(f.Method))))) AS Method_SK,
+    CAST(e.Date AS DATE) AS Date_SK,  -- ⬅️ Changed from f.Event_Date to e.Date
+    
+    -- Foreign keys
+    ABS(CHECKSUM(LOWER(LTRIM(RTRIM(f.Fighter_1))))) AS Fighter_1_SK,
+    ABS(CHECKSUM(LOWER(LTRIM(RTRIM(f.Fighter_2))))) AS Fighter_2_SK,
+    f.Event_Id AS Event_SK,
+    f.Weight_Class,
+    
+    -- Fight results
     f.Result_1,
     f.Result_2,
     CASE 
-        WHEN f.Result_1 = 'W' THEN f.Fighter_1
-        WHEN f.Result_1 = 'L' THEN f.Fighter_2
-        WHEN f.Result_1 = 'D' THEN 'Draw'
+        WHEN LTRIM(RTRIM(f.Result_1)) = 'W' THEN LTRIM(RTRIM(f.Fighter_1))
+        WHEN LTRIM(RTRIM(f.Result_1)) = 'L' THEN LTRIM(RTRIM(f.Fighter_2))
+        WHEN LTRIM(RTRIM(f.Result_1)) = 'D' THEN 'Draw'
         ELSE 'No Contest'
     END AS Winner,
     CASE 
-        WHEN f.Result_1 = 'W' THEN f.Fighter_2
-        WHEN f.Result_1 = 'L' THEN f.Fighter_1
-        WHEN f.Result_1 = 'D' THEN 'Draw'
+        WHEN LTRIM(RTRIM(f.Result_1)) = 'W' THEN LTRIM(RTRIM(f.Fighter_2))
+        WHEN LTRIM(RTRIM(f.Result_1)) = 'L' THEN LTRIM(RTRIM(f.Fighter_1))
+        WHEN LTRIM(RTRIM(f.Result_1)) = 'D' THEN 'Draw'
         ELSE 'No Contest'
     END AS Loser,
+    
+    -- Method & round info
     f.Method,
-    f.Round,
+    TRY_CAST(NULLIF(f.Round,'') AS INT) AS Round,
     f.Fight_Time,
-    f.Weight_Class,
     f.Referee,
     f.Method_Details,
+
+    -- Fighter 1 stats
+    TRY_CAST(NULLIF(f.KD_1,'') AS INT) AS KD_1,
+    TRY_CAST(NULLIF(f.STR_1,'') AS INT) AS STR_1,
+    TRY_CAST(NULLIF(f.TD_1,'') AS INT) AS TD_1,
+    TRY_CAST(NULLIF(f.SUB_1,'') AS INT) AS SUB_1,
+    TRY_CAST(NULLIF(f.Ctrl_1,'') AS DECIMAL(10,2)) AS Ctrl_1,
     
-    -- Fighter 1 Stats (converted to numeric)
-    TRY_CAST(f.KD_1 AS INT) AS KD_1,
-    TRY_CAST(f.STR_1 AS INT) AS STR_1,
-    TRY_CAST(f.TD_1 AS INT) AS TD_1,
-    TRY_CAST(f.SUB_1 AS INT) AS SUB_1,
-    TRY_CAST(f.Ctrl_1 AS DECIMAL(10,2)) AS Ctrl_1,
-    TRY_CAST(f.Head_Percent_1 AS DECIMAL(5,2)) AS Head_Percent_1,
-    TRY_CAST(f.Body_Percent_1 AS DECIMAL(5,2)) AS Body_Percent_1,
-    TRY_CAST(f.Distance_Percent_1 AS DECIMAL(5,2)) AS Distance_Percent_1,
-    TRY_CAST(f.Clinch_Percent_1 AS DECIMAL(5,2)) AS Clinch_Percent_1,
-    TRY_CAST(f.Ground_Percent_1 AS DECIMAL(5,2)) AS Ground_Percent_1,
-    
-    -- Fighter 2 Stats (converted to numeric)
-    TRY_CAST(f.KD_2 AS INT) AS KD_2,
-    TRY_CAST(f.STR_2 AS INT) AS STR_2,
-    TRY_CAST(f.TD_2 AS INT) AS TD_2,
-    TRY_CAST(f.SUB_2 AS INT) AS SUB_2,
-    TRY_CAST(f.Ctrl_2 AS DECIMAL(10,2)) AS Ctrl_2,
-    TRY_CAST(f.Head_Percent_2 AS DECIMAL(5,2)) AS Head_Percent_2,
-    TRY_CAST(f.Body_Percent_2 AS DECIMAL(5,2)) AS Body_Percent_2,
-    TRY_CAST(f.Distance_Percent_2 AS DECIMAL(5,2)) AS Distance_Percent_2,
-    TRY_CAST(f.Clinch_Percent_2 AS DECIMAL(5,2)) AS Clinch_Percent_2,
-    TRY_CAST(f.Ground_Percent_2 AS DECIMAL(5,2)) AS Ground_Percent_2,
-    
-    CAST(GETDATE() AS DATE) AS View_Refreshed_At
+    -- Fighter 2 stats
+    TRY_CAST(NULLIF(f.KD_2,'') AS INT) AS KD_2,
+    TRY_CAST(NULLIF(f.STR_2,'') AS INT) AS STR_2,
+    TRY_CAST(NULLIF(f.TD_2,'') AS INT) AS TD_2,
+    TRY_CAST(NULLIF(f.SUB_2,'') AS INT) AS SUB_2,
+    TRY_CAST(NULLIF(f.Ctrl_2,'') AS DECIMAL(10,2)) AS Ctrl_2,
+
+    CAST(GETDATE() AS DATETIME) AS View_Refreshed_At
 FROM silver.Fights f
-LEFT JOIN silver.Events e
+LEFT JOIN silver.Events e  -- ⬅️ Added JOIN to get event date
     ON f.Event_Id = e.Event_Id;
 GO
+------------------------------------------------------------
+
 
 ------------------------------------------------------------
--- 5️⃣ vw_Fighter_Performance_Summary
--- Aggregated fighter-level performance summary
+-- 6️⃣ Optional: Fact_Event_Metrics
+-- Event-level metrics aggregated
 ------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Fighter_Performance_Summary
-AS
-WITH FighterResults AS (
-    -- Get all fights for Fighter_1
-    SELECT 
-        Fighter_1 AS Fighter_Name,
-        CASE WHEN Result_1 = 'W' THEN 1 ELSE 0 END AS Win,
-        CASE WHEN Result_1 = 'L' THEN 1 ELSE 0 END AS Loss,
-        CASE WHEN Result_1 = 'D' THEN 1 ELSE 0 END AS Draw,
-        Event_Id
-    FROM silver.Fights
-    WHERE Fighter_1 IS NOT NULL
-    
-    UNION ALL
-    
-    -- Get all fights for Fighter_2
-    SELECT 
-        Fighter_2 AS Fighter_Name,
-        CASE WHEN Result_2 = 'W' THEN 1 ELSE 0 END AS Win,
-        CASE WHEN Result_2 = 'L' THEN 1 ELSE 0 END AS Loss,
-        CASE WHEN Result_2 = 'D' THEN 1 ELSE 0 END AS Draw,
-        Event_Id
-    FROM silver.Fights
-    WHERE Fighter_2 IS NOT NULL
-)
-SELECT
-    fs.Full_Name,
-    COUNT(DISTINCT fr.Event_Id) AS Total_Fights,
-    SUM(fr.Win) AS Wins,
-    SUM(fr.Loss) AS Losses,
-    SUM(fr.Draw) AS Draws,
-    CASE 
-        WHEN SUM(fr.Win) + SUM(fr.Loss) > 0 
-        THEN CAST((SUM(fr.Win) * 100.0) / (SUM(fr.Win) + SUM(fr.Loss)) AS DECIMAL(5,2))
-        ELSE 0 
-    END AS Win_Percentage,
-    
-    -- Convert text to numeric before averaging
-    AVG(TRY_CAST(fs.Sig_Str_Percent AS DECIMAL(5,2))) AS Avg_Sig_Str_Accuracy,
-    AVG(TRY_CAST(fs.TD AS DECIMAL(5,2))) AS Avg_Takedown_Accuracy,
-    AVG(TRY_CAST(fs.Ctrl AS DECIMAL(10,2))) AS Avg_Control_Time,
-    AVG(TRY_CAST(fs.Sub_Att AS DECIMAL(5,2))) AS Avg_Sub_Attempts
-    
-FROM silver.Fighter_Stats fs
-LEFT JOIN FighterResults fr 
-    ON fs.Full_Name = fr.Fighter_Name
-GROUP BY fs.Full_Name;
-GO
-
-------------------------------------------------------------
--- 6️⃣ vw_Fight_Method_Analysis
--- Analysis of fight outcomes by method
-------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Fight_Method_Analysis
-AS
-SELECT
-    Method,
-    Method_Details,
-    Weight_Class,
-    COUNT(*) AS Total_Fights,
-    AVG(CAST(Round AS DECIMAL(5,2))) AS Avg_Round_Ended,
-    MIN(Round) AS Earliest_Round,
-    MAX(Round) AS Latest_Round
-FROM silver.Fights
-WHERE Method IS NOT NULL
-GROUP BY Method, Method_Details, Weight_Class;
-GO
-
-------------------------------------------------------------
--- 7️⃣ vw_Weight_Class_Statistics
--- Aggregated statistics by weight class
-------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Weight_Class_Statistics
-AS
-SELECT
-    Weight_Class,
-    COUNT(DISTINCT Event_Id) AS Total_Events,
-    COUNT(*) AS Total_Fights,
-    AVG(TRY_CAST(Round AS DECIMAL(5,2))) AS Avg_Rounds,
-    SUM(CASE WHEN Method LIKE '%KO%' OR Method LIKE '%TKO%' THEN 1 ELSE 0 END) AS KO_TKO_Finishes,
-    SUM(CASE WHEN Method LIKE '%Submission%' THEN 1 ELSE 0 END) AS Submission_Finishes,
-    SUM(CASE WHEN Method LIKE '%Decision%' THEN 1 ELSE 0 END) AS Decision_Finishes,
-    CAST(
-        (SUM(CASE WHEN Method LIKE '%KO%' OR Method LIKE '%TKO%' THEN 1 ELSE 0 END) * 100.0) / 
-        NULLIF(COUNT(*), 0) AS DECIMAL(5,2)
-    ) AS KO_Rate,
-    CAST(
-        (SUM(CASE WHEN Method LIKE '%Submission%' THEN 1 ELSE 0 END) * 100.0) / 
-        NULLIF(COUNT(*), 0) AS DECIMAL(5,2)
-    ) AS Submission_Rate
-FROM silver.Fights
-WHERE Weight_Class IS NOT NULL
-GROUP BY Weight_Class;
-GO
-
-------------------------------------------------------------
--- 8️⃣ vw_Event_Performance_Metrics
--- Event-level aggregated metrics
-------------------------------------------------------------
-CREATE OR ALTER VIEW gold.vw_Event_Performance_Metrics
+CREATE OR ALTER VIEW gold.Fact_Event_Metrics
 AS
 SELECT
     e.Event_Id,
-    e.Name AS Event_Name,
-    e.Date AS Event_Date,
-    e.Location,
     COUNT(f.Event_Id) AS Total_Fights,
-    AVG(TRY_CAST(f.Round AS DECIMAL(5,2))) AS Avg_Rounds_Per_Fight,
+    AVG(TRY_CAST(NULLIF(f.Round,'') AS DECIMAL(5,2))) AS Avg_Rounds_Per_Fight,
     SUM(CASE WHEN f.Method LIKE '%KO%' OR f.Method LIKE '%TKO%' THEN 1 ELSE 0 END) AS Total_Knockouts,
     SUM(CASE WHEN f.Method LIKE '%Submission%' THEN 1 ELSE 0 END) AS Total_Submissions,
-    AVG(TRY_CAST(f.KD_1 AS INT) + TRY_CAST(f.KD_2 AS INT)) AS Avg_Knockdowns_Per_Fight,
-    AVG(TRY_CAST(f.SUB_1 AS INT) + TRY_CAST(f.SUB_2 AS INT)) AS Avg_Sub_Attempts_Per_Fight
+    AVG(ISNULL(TRY_CAST(NULLIF(f.KD_1,'') AS INT),0) + ISNULL(TRY_CAST(NULLIF(f.KD_2,'') AS INT),0)) AS Avg_Knockdowns_Per_Fight,
+    AVG(ISNULL(TRY_CAST(NULLIF(f.SUB_1,'') AS INT),0) + ISNULL(TRY_CAST(NULLIF(f.SUB_2,'') AS INT),0)) AS Avg_Sub_Attempts_Per_Fight,
+    CAST(GETDATE() AS DATETIME) AS View_Refreshed_At
 FROM silver.Events e
 LEFT JOIN silver.Fights f
     ON e.Event_Id = f.Event_Id
-GROUP BY e.Event_Id, e.Name, e.Date, e.Location;
+GROUP BY e.Event_Id;
 GO
 
 ------------------------------------------------------------
--- ✅ Summary
---  Created:
---    gold.vw_Dim_Fighter (with surrogate key & numeric conversions)
---    gold.vw_Dim_Event (with quarter added)
---    gold.vw_Fact_Fight_Performance (with all numeric conversions)
---    gold.vw_Fighter_Performance_Summary (FIXED with proper joins & conversions)
---    gold.vw_Fight_Method_Analysis (BONUS)
---    gold.vw_Weight_Class_Statistics (BONUS)
---    gold.vw_Event_Performance_Metrics (BONUS)
+-- ✅ Gold Layer Summary
+-- Dimensions:
+--    Dim_Fighter
+--    Dim_Event
+--    Dim_WeightClass
+--    Dim_Date
+--    Dim_Method
+-- Facts:
+--    Fact_Fight_Performance
+--    Fact_Event_Metrics
 ------------------------------------------------------------
-PRINT('🏆 All Gold Layer views successfully created!');
+PRINT('🏆 Gold Layer with proper surrogate keys and facts/dims ready for analytics!');
 GO
