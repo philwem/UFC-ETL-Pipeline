@@ -286,11 +286,4 @@ It is fully suitable for showcasing skills in:
 
 ---
 
-If you want, I can also generate:
 
-📌 A clean **ERD diagram**
-📌 A **GitHub Wiki** version
-📌 A **project architecture diagram**
-📌 A **Power BI dashboard layout**
-
-Just tell me **“generate ERD”** or **“create BI plan”**.
