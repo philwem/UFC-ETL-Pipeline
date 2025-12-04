@@ -2,7 +2,7 @@
    -- script description: This script creates the necessary tables in the bronze layer of the data warehouse.
    -- Tables: Events, Fighter_Stats, Fighter, Fights
 
-  USE UFC_DataWareHouse;
+  USE [UFC-DataWareHouse];
 
 
 -- Drop & recreate schema bronze if needed
