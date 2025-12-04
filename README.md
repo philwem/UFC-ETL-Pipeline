@@ -1,128 +1,296 @@
-# 🥋UFC Data Warehouse
-Welcome to the UFC Data Warehouse and Analytics repository! 
-This project demonstrates a comprehensive data warehousing and analytics solution using real-world style UFC datasets. From building a star schema warehouse to generating actionable insights, this project is designed as a portfolio showcase of industry best practices in data engineering and analytics.
-## Project Requirements
-Building the Data Warehouse (Data Engineering)
-## Objective
-Design and implement a modern star schema data warehouse in SQL Server using medallion architecture (Bronze-Silver-Gold layers) to consolidate UFC events, fights, fighters, and fighter statistics data, enabling analytical reporting, performance tracking, and support for business intelligence queries about fighter performance, fight outcomes, and event trends.
-## Specifications
-### Source Data  (CSVs) :
-*events.csv* → event details (metadata about each event)
 
-*fighters.csv* → fighter profile information
+# 🥋 UFC Data Warehouse & Analytics
 
-*fighter_stats.csv* → aggregate performance statistics per fighter
+A Modern Medallion Architecture (Bronze → Silver → Gold) for UFC Fight, Fighter, and Event Analytics
+*Built with SQL Server · Python · ETL Pipelines · Star Schema · BI & Analytics*
 
-*fights.csv* → records of individual fight outcomes
-### Data Quality:
-Cleanse and resolve data quality issues (duplicates, missing values, inconsistent formats).
-### Integration:
-Combine all sources into a unified, user-friendly star schema designed for analytical queries.
-### Scope:
-Focus on the latest available datasets; historization is not required.
-### Documentation: 
-Provide clear documentation of the data model, transformations, and queries for both technical and non-technical stakeholders.
+---
 
-## Warehouse Design
-## 🏗Facts (actions/transactions)
-### FactFights (core fact table)
+## 📌 **Overview**
 
-                          Dim_Date
-                            |
-                            |
-Dim_Fighter  ----<  Fact_Fight_Performance  >---- Dim_Event
-   |                     |   ^   |   ^               |
-   |                     |   |   |   |               |
-Dim_WeightClass          |   |   |   |         Dim_Method
-                         |   |   |   |
-                         V   V   V   V
-                    Fact_Fighter_Stats (optional, grain: per-fighter)
+This project demonstrates a complete **data engineering + data analytics** solution using real-world style UFC datasets.
+It implements a modern **Medallion Architecture (Bronze → Silver → Gold)**, a **Kimball Star Schema**, and a set of **analytical queries and KPIs** for fighter and event performance.
 
+This repository is structured as a full **portfolio project**, showcasing industry best practices:
 
-Fact_Fight_Performance grain: one row per fight (unique fight_SK)
+* Data ingestion & cleansing
+* Data modeling (Star Schema)
+* Surrogate key generation
+* Dimensional modeling (Facts & Dimensions)
+* SQL Server ETL + transformation logic
+* Analytics queries + insights
+* Complete documentation
 
-Dim_Fighter: one row per fighter, stable surrogate (fighter_sk)
+---
 
-Dim_Event: one row per event (event_sk)
+# 🏛 **Project Requirements**
 
-Dim_Date: canonical calendar dimension for BI
+## 🎯 **Objective**
 
-Dim_Method / Dim_WeightClass: small lookup dims
+Design and implement a **star schema data warehouse in SQL Server** that consolidates:
 
-Fact_Fighter_Stats (optional): aggregated per-fighter (season / career snapshots)
+* UFC Events
+* Fighters
+* Fight Results
+* Fighter Statistics
 
+The warehouse enables analytics such as fighter performance trends, ranking comparisons, event summaries, and method-of-finish insights.
 
-## (Optional)
-**FactFighterStats** → if you want to keep fighter_stats.csv as a separate fact for per-fighter aggregated performance.
+---
 
+## 📂 **Source Data (CSVs)**
 
-## 🧾Dimensions (descriptive attributes)
-### DimFighter
-fighter_id, name, country, stance, height, reach, dob
-## DimEvent
-event_id, event_name, event_date, location
-## DimDate
-date_id, full_date, day, month, year, quarter
-## DimMethod
-method_id, method_type (KO/TKO, Decision, Submission, etc.)
+| File                  | Description                            |
+| --------------------- | -------------------------------------- |
+| **events.csv**        | Event metadata (date, location, name)  |
+| **fighters.csv**      | Fighter profiles + physical attributes |
+| **fighter_stats.csv** | Per-fighter aggregated statistics      |
+| **fights.csv**        | Fight outcomes + round/method stats    |
 
-##(and optionally FactFighterStats linked to DimFighter)
+---
 
-## Analytics Requirements
+## 🧹 **Data Quality**
 
-### Fighter Performance
-Win/Loss ratio per fighter
+Tasks include:
 
-Fighters with the most finishes (KO/Submissions)
+✔ Remove duplicates
+✔ Standardize inconsistent formats
+✔ Parse textual stats to numeric types
+✔ Clean height/weight/reach formats
+✔ Harmonize naming differences between datasets
 
-Average fight duration per fighter
+---
 
-### Event Analytics
-Events with the most fights
+## 🔗 **Integration Requirements**
 
-Top locations by number of events
+* Merge all datasets into a unified analytical model
+* Implement surrogate keys (SKs) for all dimensions
+* Build a consistent grain across facts
+* Deliver a clean, user-friendly Gold Layer
 
-Event activity trend (fights per year/quarter)
+---
 
-### Fight Trends
-Most common winning method overall
+## 📘 **Documentation Requirements**
 
-Round distribution of finishes (most fights ending in round 1, etc.)
+* ERD (Star Schema Diagram)
+* Data Dictionary / Data Catalog
+* Transformation logic
+* Analytics queries
 
-Country-level fighter performance comparison
+---
 
-## Deliverables
-Data Warehouse Schema (star schema implemented in SQL Server)
+# 🏗️ **Warehouse Architecture (Medallion Model)**
 
-ETL Process (staging CSVs → cleansing → load to DW)
+```
+Bronze → Raw ingestion (CSV → SQL)
+Silver → Standardized, cleaned tables
+Gold   → Star schema for analytics (Fact + Dim)
+```
 
-SQL Queries for insights above
+---
 
-**Documentation:**
-ERD (star schema diagram)
+# ⭐ **Gold Layer (Star Schema)**
 
-Data dictionary (tables + columns)
+This is the final analytical model.
+It uses **Kimball-style dimensional modeling** with **Facts** and **Dimensions**.
 
-README in GitHub
+---
 
-## BI: Analytics & Reporting (Data Analytics)
-### Objective
-Develop SQL-based analytics to deliver detailed insights into:
+## 🧩 **Facts (Transactional / Measurable Data)**
 
-Fighter Performance (win/loss ratios, finish rates, average fight duration)
+### **Fact_Fight_Performance** (Core Fact Table)
 
-Event Analytics (most active venues, event activity over time, fights per event)
+```
+                 Dim_Date
+                    |
+                    |
+Dim_Fighter ——< Fact_Fight_Performance >—— Dim_Event
+     |                 |      ^    |
+     |                 |      |    |
+Dim_WeightClass        |      |    |
+                       |      |    |
+                     Dim_Method
+```
 
-Fight Trends (most common winning methods, round/time distributions, country-level comparisons)
+**Grain:**
+➡️ One row per fight (1 fight = 1 fact record)
 
-This version is industry-standard:
-No ERP/CRM shortcut labels
+**Foreign Keys:**
 
-Pure Fact + Dimension modeling (Kimball method)
+* Fighter_1_SK
+* Fighter_2_SK
+* Event_SK
+* Date_SK
+* Method_SK
+* Weight_Class
 
-Easy for any engineer/analyst to understand
+---
 
+## 📘 **Dimensions (Descriptive Attributes)**
 
+### **Dim_Fighter**
 
+Fighter profile & long-term attributes
+(name, stance, reach, weight class, win/loss, style)
 
+### **Dim_Event**
 
+Event metadata
+(date, location, UFC card name)
+
+### **Dim_Date**
+
+Full calendar dimension
+(day, month, year, quarter)
+
+### **Dim_Method**
+
+Method of victory
+(KO/TKO, Submission, Decision, etc.)
+
+### **Dim_WeightClass**
+
+Lookup for all UFC weight classes
+
+---
+
+# 📚 **Gold Layer Data Catalog**
+
+### **1. gold.Dim_Fighter**
+
+Stores fighter profiles + aggregated stats
+Surrogate Key: **Fighter_SK**
+
+### **2. gold.Dim_Event**
+
+Event-level metadata
+Surrogate Key: **Event_SK**
+
+### **3. gold.Dim_WeightClass**
+
+Lookup + aggregated fight counts
+
+### **4. gold.Dim_Method**
+
+Method of victory classification
+
+### **5. gold.Dim_Date**
+
+Canonical BI calendar dimension
+
+### **6. gold.Fact_Fight_Performance**
+
+Core fact table supporting analytics on:
+
+* Fight outcomes
+* Fighter performance
+* Event stats
+* Method of victory
+* Round/time distribution
+
+### **7. gold.Fact_Event_Metrics**
+
+Aggregated event-level metrics for dashboards
+
+---
+
+# 📊 **Analytics Requirements**
+
+## 🔥 Fighter Performance Insights
+
+* Win/loss ratio per fighter
+* Fighters with the most KOs/Submissions
+* Average fight duration per fighter
+* Strike accuracy vs takedown accuracy trends
+* Fighter comparison analytics
+
+---
+
+## 🎪 Event Analytics
+
+* Events with the most fights
+* Top hosting cities & countries
+* Yearly event activity trends
+* Per-event performance summaries
+
+---
+
+## ⚔️ Fight Trends (Global Insights)
+
+* Most common method of victory
+* Round-by-round finish distribution
+* Fastest / Longest fights
+* Weight class performance comparisons
+
+---
+
+# 📦 **Deliverables**
+
+### ✔️ Data Engineering (SQL Server)
+
+* Medallion Architecture (Bronze → Silver → Gold)
+* Star Schema (Facts + Dimensions)
+* Surrogate Key Design
+* SQL DDL + transformations
+
+### ✔️ Data Analytics Queries
+
+* Fighter performance metrics
+* Fight outcome analysis
+* Event-level summaries
+* Method-of-victory KPIs
+
+### ✔️ Documentation
+
+* ERD (Entity Relationship Diagram)
+* Data Dictionary / Catalog
+* README (this document)
+* SQL transformation logic
+
+---
+
+# 📊 **BI / Reporting Layer**
+
+Delivered through SQL queries, ready for:
+
+* Power BI
+* Tableau
+* Python notebooks
+* ML models
+
+Insights include:
+
+* Fighter rankings
+* Strike/grappling accuracy trends
+* Career progression
+* Event summaries
+* Weight class analysis
+
+---
+
+# 🏁 **Summary**
+
+This project demonstrates:
+
+* ⭐ Modern Data Engineering
+* ⭐ Professional Dimensional Modeling
+* ⭐ High-value UFC analytics
+* ⭐ Complete portfolio documentation
+
+It is fully suitable for showcasing skills in:
+
+* SQL, ETL, Data Modeling
+* Data Warehousing
+* BI & Analytics
+* Medallion Architecture
+
+---
+
+If you want, I can also generate:
+
+📌 A clean **ERD diagram**
+📌 A **GitHub Wiki** version
+📌 A **project architecture diagram**
+📌 A **Power BI dashboard layout**
+
+Just tell me **“generate ERD”** or **“create BI plan”**.
