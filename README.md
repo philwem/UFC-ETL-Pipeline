@@ -5,6 +5,14 @@ A Modern Medallion Architecture (Bronze → Silver → Gold) for UFC Fight, Figh
 *Built with SQL Server · Python · ETL Pipelines · Star Schema · BI & Analytics*
 
 ---
+---
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
+![SQL Server](https://img.shields.io/badge/SQL%20Server-2019+-red.svg)
+![VS Code](https://img.shields.io/badge/Editor-VS%20Code-purple.svg)
+![Status](https://img.shields.io/badge/Status-Portfolio%20Project-green.svg)
+
+---
 
 ## 📌 **Overview**
 
